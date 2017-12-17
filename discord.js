@@ -148,7 +148,6 @@ client.on("message", async message => {
       return true;
     }
 
-    busyThinking = true;
     let userId = message.author.id;
 
     if (message.content.substr(-1, 1) === '!') {
@@ -168,8 +167,7 @@ client.on("message", async message => {
         );
 
         collector.on('collect', (ele, collect) => {
-          message.channel.send('Allow me to mediate on this for a second...');
-
+          busyThinking = true;
           try {
             let amount        = parseFloat(settings.useFee);
             let discordUserID = config.clientID;
