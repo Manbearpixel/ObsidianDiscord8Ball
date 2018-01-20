@@ -1,0 +1,8 @@
+{
+    "uid": "discord-8ball",
+    "append": true,
+    "watch": false,
+    "script": "discord.js",
+    "sourceDir": "./",
+    "workingDir": "./"
+}

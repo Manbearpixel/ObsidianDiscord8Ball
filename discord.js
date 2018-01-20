@@ -158,11 +158,16 @@ client.on("message", async message => {
       let rStatement = Math.floor(rN1 * Statements.length);
       let randomStatement = Statements[rStatement];
 
-      message.channel.send(`${randomStatement} To answer this question of yours for a small fee of \`${settings.useFee}\` ODN please react to this message with a 👍`)
+      message.channel.send(`${randomStatement} To answer this question of yours for a small fee of \`${settings.useFee}\` ODN please react to this message with a 👍 emoji`)
       .then((Message) => {
+        /* Discord Emoji Identifier Base for "thumbs-up":
+            %F0%9F%91%8D
+            👍 👍🏻 👍 👍🏽 👍🏾 👍🏿
+        */
         let collector = Message.createReactionCollector(
           (reaction, user) => {
-            return !!(reaction.emoji.name === '👍' && user.id === userId)
+            let isThumbsup = (reaction.emoji.identifier.indexOf('%F0%9F%91%8D') != -1);
+            return !!(isThumbsup && user.id === userId)
           }
         );
 
