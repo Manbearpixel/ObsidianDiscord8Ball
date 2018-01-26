@@ -1,6 +1,6 @@
 {
   "name": "odn-8ball",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Discord Magic 8-Ball for Obsidian",
   "main": "discord.js",
   "dependencies": {

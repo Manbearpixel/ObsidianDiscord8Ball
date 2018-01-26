@@ -137,7 +137,7 @@ client.on("message", async message => {
   const command = args.shift().toLowerCase();
 
   if(command === 'help') {
-    message.channel.send(Tipbot.helpMessage());
+    message.channel.send(`Questions you seek, answers I have! For \`${settings.useFee}\` I will answer anything you ask as best as best as I can see...\nExample: \`${config.prefix}8ball Will I receive a staking reward today?\``);
   }
 
   if(command === '8ball') {
@@ -153,81 +153,77 @@ client.on("message", async message => {
     if (message.content.substr(-1, 1) === '!') {
       message.channel.send(`<@${userId}> Why must you shout!`);
     }
-    else if (message.content.substr(-1, 1) === '?') {
-      let rN1 = Math.random();
-      let rStatement = Math.floor(rN1 * Statements.length);
-      let randomStatement = Statements[rStatement];
 
-      message.channel.send(`${randomStatement} To answer this question of yours for a small fee of \`${settings.useFee}\` ODN please react to this message with a 👍 emoji`)
-      .then((Message) => {
-        /* Discord Emoji Identifier Base for "thumbs-up":
-            %F0%9F%91%8D
-            👍 👍🏻 👍 👍🏽 👍🏾 👍🏿
-        */
-        let collector = Message.createReactionCollector(
-          (reaction, user) => {
-            let isThumbsup = (reaction.emoji.identifier.indexOf('%F0%9F%91%8D') != -1);
-            return !!(isThumbsup && user.id === userId)
+    let rN1 = Math.random();
+    let rStatement = Math.floor(rN1 * Statements.length);
+    let randomStatement = Statements[rStatement];
+
+    message.channel.send(`${randomStatement} To answer this question of yours for a small fee of \`${settings.useFee}\` ODN please react to this message with a 👍 emoji`)
+    .then((Message) => {
+      /* Discord Emoji Identifier Base for "thumbs-up":
+          %F0%9F%91%8D
+          👍 👍🏻 👍 👍🏽 👍🏾 👍🏿
+      */
+      let collector = Message.createReactionCollector(
+        (reaction, user) => {
+          let isThumbsup = (reaction.emoji.identifier.indexOf('%F0%9F%91%8D') != -1);
+          return !!(isThumbsup && user.id === userId)
+        }
+      );
+
+      collector.on('collect', (ele, collect) => {
+        busyThinking = true;
+        try {
+          let amount        = parseFloat(settings.useFee);
+          let discordUserID = config.clientID;
+
+          if (userId === discordUserID) {
+            throw new Error('You cannot tip yourself!');
           }
-        );
 
-        collector.on('collect', (ele, collect) => {
-          busyThinking = true;
-          try {
-            let amount        = parseFloat(settings.useFee);
-            let discordUserID = config.clientID;
+          console.log(`userId :: ${userId}`);
+          console.log(`discordUserID :: ${discordUserID}`);
+          console.log(`amount :: ${amount}`);
 
-            if (userId === discordUserID) {
-              throw new Error('You cannot tip yourself!');
-            }
+          Tipbot.getOdnAddress(discordUserID)
+          .then((RecipientOdnAddress) => {
+            console.log(`attempting to send tip to ${RecipientOdnAddress}`)
 
-            console.log(`userId :: ${userId}`);
-            console.log(`discordUserID :: ${discordUserID}`);
-            console.log(`amount :: ${amount}`);
+            Tipbot.withdrawOdn(userId, RecipientOdnAddress, amount)
+            .then((Status) => {
+              console.log('...Withdraw STATUS', Status);
+              if (Status.status == 'success') {
+                let rN2 = Math.random();
 
-            Tipbot.getOdnAddress(discordUserID)
-            .then((RecipientOdnAddress) => {
-              console.log(`attempting to send tip to ${RecipientOdnAddress}`)
+                let rAnswer = Math.floor(rN2 * MemeAnswers.length);
+                let answer  = MemeAnswers[rAnswer];
 
-              Tipbot.withdrawOdn(userId, RecipientOdnAddress, amount)
-              .then((Status) => {
-                console.log('...Withdraw STATUS', Status);
-                if (Status.status == 'success') {
-                  let rN2 = Math.random();
-
-                  let rAnswer = Math.floor(rN2 * MemeAnswers.length);
-                  let answer  = MemeAnswers[rAnswer];
-
-                  message.channel.send(`<@${userId}> The answer you seek is...\n${answer}!`);
-                  busyThinking = false;
+                message.channel.send(`<@${userId}> The answer you seek is...\n${answer}!`);
+                busyThinking = false;
+              }
+              else {
+                if (Status.message.indexOf('insufficient') !== -1) {
+                  message.channel.send(`<@${userId}> I do not accept tulips! You must have enough ODN in your wallet to cover my fee of \`${settings.useFee}\` ODN!`);
                 }
                 else {
-                  if (Status.message.indexOf('insufficient') !== -1) {
-                    message.channel.send(`<@${userId}> I do not accept tulips! You must have enough ODN in your wallet to cover my fee of \`${settings.useFee}\` ODN!`);
-                  }
-                  else {
-                    message.channel.send(`<@${userId}> I... I am unable to give you an answer right now!\n${Status.message}`);
-                  }
-                  busyThinking = false;
+                  message.channel.send(`<@${userId}> I... I am unable to give you an answer right now!\n${Status.message}`);
                 }
-              })
-              .catch((err) => {
-                console.log(err);
-                message.channel.send(`<@${userId}> I... I am unable to give you an answer right now!`);
                 busyThinking = false;
-              });
+              }
+            })
+            .catch((err) => {
+              console.log(err);
+              message.channel.send(`<@${userId}> I... I am unable to give you an answer right now!`);
+              busyThinking = false;
             });
-          } catch (err) {
-            console.log(err);
-            message.channel.send(`<@${userId}> I... I am unable to give you an answer right now!`);
-            busyThinking = false;
-          }
-        });
+          });
+        } catch (err) {
+          console.log(err);
+          message.channel.send(`<@${userId}> I... I am unable to give you an answer right now!`);
+          busyThinking = false;
+        }
       });
-    }
-    else {
-      message.channel.send(`<@${userId}> Please ask me a proper question!`);
-    }
+    });
   }
 });
 
